@@ -1,0 +1,8 @@
+{
+  "name": "@erp/config",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "typescript"
+  ]
+}

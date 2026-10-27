@@ -1,0 +1,31 @@
+{
+  "name": "@erp/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --turbopack",
+    "start": "next start",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --pool=threads --maxWorkers=1 --no-file-parallelism"
+  },
+  "dependencies": {
+    "@erp/types": "workspace:*",
+    "@erp/ui": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "next": "^16.2.9",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@erp/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^24.10.13",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

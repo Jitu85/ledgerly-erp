@@ -1,0 +1,23 @@
+{
+  "name": "@erp/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --pool=threads --maxWorkers=1 --no-file-parallelism --exclude='dist/**'"
+  },
+  "dependencies": {
+    "bullmq": "^5.66.5"
+  },
+  "devDependencies": {
+    "@erp/config": "workspace:*",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: ledgerly-api
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: pnpm install --frozen-lockfile=false && pnpm --filter @erp/database build && pnpm --filter @erp/types build && pnpm --filter @erp/api build
+    startCommand: pnpm --filter @erp/api start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: 10000
+      - key: WEB_ORIGIN
+        value: https://ledgerly-erp.vercel.app
+      - key: PLATFORM_DATABASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: NEON_AUTH_BASE_URL
+        sync: false
+      - key: NEON_AUTH_JWKS_URL
+        sync: false
+      - key: NEON_REALTIME_URL
+        sync: false
+      - key: NEON_REALTIME_SECRET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_ENDPOINT_URL_S3
+        sync: false
+      - key: AWS_REGION
+        value: ap-southeast-1
+      - key: NEON_OBJECT_STORAGE_BUCKET
+        value: assets
+      - key: NEON_FUNCTION_HELLO_BASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true

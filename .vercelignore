@@ -1,0 +1,15 @@
+.pnpm-store
+node_modules
+.next
+dist
+.turbo
+.vercel
+coverage
+*.log
+.git
+.github
+playwright-report
+test-results
+.corepack
+.corepack-bin
+.qa-*

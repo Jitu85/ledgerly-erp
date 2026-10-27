@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+coverage
+pnpm-lock.yaml
+database/migrations
+.npm-cache
+.pnpm-store
+.corepack
+.corepack-bin
+docs/0*.md
+docs/10-security-and-audit-policy.md
