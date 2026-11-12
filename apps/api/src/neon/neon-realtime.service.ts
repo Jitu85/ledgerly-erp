@@ -41,7 +41,9 @@ export class NeonRealtimeService {
     try {
       // The realtime URL is a WebSocket endpoint (wss://...).
       // We can probe the HTTP equivalent (https://...) or check DNS/TCP reachability via fetch
-      const httpUrl = this.realtimeUrl.replace(/^wss:\/\//i, "https://").replace(/^ws:\/\//i, "http://");
+      const httpUrl = this.realtimeUrl
+        .replace(/^wss:\/\//i, "https://")
+        .replace(/^ws:\/\//i, "http://");
       const response = await fetch(httpUrl, {
         method: "GET",
         headers: { Accept: "*/*" },

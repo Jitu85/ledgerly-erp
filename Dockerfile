@@ -1,14 +1,15 @@
 # Production Dockerfile for Ledgerly ERP API
-FROM node:22-alpine AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
 # Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 # Copy monorepo configuration
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY packages/ ./packages/
+COPY database/ ./database/
 COPY apps/api/ ./apps/api/
 
 # Install dependencies and build libraries & API
@@ -18,14 +19,15 @@ RUN pnpm --filter @erp/types build
 RUN pnpm --filter @erp/api build
 
 # Runner stage
-FROM node:22-alpine AS runner
+FROM node:24-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV API_PORT=4000
 ENV PORT=4000
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.9.0 --activate
 
 COPY --from=builder /app /app
 

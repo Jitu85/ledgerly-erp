@@ -34,7 +34,9 @@ export class NeonStorageService {
         forcePathStyle: true, // Required for Neon Object Storage
       });
       this.isConfigured = true;
-      this.logger.log(`Neon Object Storage configured for bucket '${this.bucketName}' at ${endpoint}`);
+      this.logger.log(
+        `Neon Object Storage configured for bucket '${this.bucketName}' at ${endpoint}`,
+      );
     } else {
       this.isConfigured = false;
       this.logger.warn("Neon Object Storage credentials not fully set; storage disabled");

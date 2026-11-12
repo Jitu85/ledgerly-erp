@@ -86,7 +86,7 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
 dotenv.config();
 
-const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 if (!url) throw new Error("DATABASE_URL or DATABASE_URL_UNPOOLED is required");
 const client = postgres(url, { max: 1 });
 const db = drizzle(client);
