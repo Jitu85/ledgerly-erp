@@ -12,7 +12,9 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     const rawTarget =
-      process.env.API_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+      process.env.API_BACKEND_URL ??
+      process.env.NEXT_PUBLIC_API_URL ??
+      "https://ledgerly-erp.onrender.com";
     const target = rawTarget.replace(/\/api\/v1\/?$/, "");
     return [
       {
