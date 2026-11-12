@@ -25,8 +25,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" | "forgot" | "re
     try {
       const response = await postJson(endpoint, data);
       if (!response.ok) {
-        const body = (await response.json()) as { message?: string };
-        throw new Error(body.message ?? "The request could not be completed.");
+        let errorMessage = "The request could not be completed.";
+        try {
+          const body = (await response.json()) as { message?: string };
+          errorMessage = body.message ?? errorMessage;
+        } catch {
+          if (response.status === 504 || response.status === 502) {
+            errorMessage =
+              "The backend server is waking up from idle mode (free tier cold start). Please wait a few seconds and try again.";
+          } else {
+            errorMessage = `Server responded with status ${response.status.toString()}. Please try again.`;
+          }
+        }
+        throw new Error(errorMessage);
       }
       if (mode === "login" || mode === "register") {
         router.push(safeReturnPath(params.get("returnTo")));
