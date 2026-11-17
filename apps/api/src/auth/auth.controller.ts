@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -13,15 +14,19 @@ import { ConfigService } from "@nestjs/config";
 import { Throttle } from "@nestjs/throttler";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
+  changeOwnPasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  updateProfileSchema,
+  type ChangeOwnPasswordInput,
   type ForgotPasswordInput,
   type LoginInput,
   type RegisterInput,
   type ResetPasswordInput,
   type SessionResult,
+  type UpdateProfileInput,
 } from "@erp/types";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
 import { AccessTokenGuard } from "./access-token.guard.js";
@@ -39,6 +44,25 @@ export class AuthController {
   @UseGuards(AccessTokenGuard)
   async me(@Req() request: AuthenticatedRequest) {
     return this.auth.getMe(request.auth.sub, request.auth.companyId);
+  }
+
+  @Patch("profile")
+  @UseGuards(AccessTokenGuard)
+  async updateProfile(
+    @Body(new ZodValidationPipe(updateProfileSchema)) input: UpdateProfileInput,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.auth.updateProfile(request.auth.sub, input, requestMetadata(request));
+  }
+
+  @Post("change-password")
+  @UseGuards(AccessTokenGuard)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  async changePassword(
+    @Body(new ZodValidationPipe(changeOwnPasswordSchema)) input: ChangeOwnPasswordInput,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.auth.changePassword(request.auth.sub, input, requestMetadata(request));
   }
 
   @Post("register")

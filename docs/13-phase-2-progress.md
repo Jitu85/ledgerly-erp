@@ -83,12 +83,14 @@ Repository audit, housekeeping, landing page design alignment, and build validat
 Successfully deployed the live production environment, wired all frontend screens to live backend REST endpoints, and implemented the complete Core Accounting and Expenses modules with double-entry ledger balancing and strict multi-tenancy.
 
 ### 1. Live Deployment Infrastructure
+
 - **Frontend Live Host**: Deployed to Vercel at `https://ledgerly-erp.vercel.app`.
 - **Backend API Live Host**: Deployed to Render Web Service at `https://ledgerly-erp.onrender.com`.
 - **Database**: Provisioned serverless PostgreSQL on Neon (`ep-wild-sky-a18u03qr` in `ap-southeast-1`) with pooling.
 - **Production Seed Account**: Verified `admin@ledgerly.com` / `LedgerlyAdmin2026!` for `Ledgerly Enterprises`.
 
 ### 2. Frontend Live API Integration
+
 - Wired live REST APIs across all functional modules:
   - **Dashboard**: Live metrics (`/api/v1/sales/outstanding`, inventory stock levels, purchases).
   - **Inventory**: Live stock balances, items, warehouses, and valuation.
@@ -98,6 +100,7 @@ Successfully deployed the live production environment, wired all frontend screen
   - **Auth & Profile**: Session validation (`GET /api/v1/auth/me`), profile update, and active company context.
 
 ### 3. Core Accounting & General Ledger Implementation
+
 - **PostgreSQL Schema (`database/src/accounting-schema.ts`)**:
   - `accounts`: Standard Chart of Accounts (Asset, Liability, Equity, Revenue, Expense) with parent hierarchy.
   - `accounting_periods`: Fiscal years and periods with soft-close and permanent locked status.
@@ -117,6 +120,7 @@ Successfully deployed the live production environment, wired all frontend screen
   - Fiscal Period management (Close Period, Lock Period).
 
 ### 4. Expenses & Claims Implementation
+
 - **PostgreSQL Schema (`database/src/expense-schema.ts`)**:
   - `expense_categories`: Categorization with optional policy limit and default GL account mapping.
   - `expense_claims`: Multi-line expense claims (`DRAFT`, `SUBMITTED`, `APPROVED`, `REJECTED`, `POSTED`).
@@ -130,10 +134,27 @@ Successfully deployed the live production environment, wired all frontend screen
   - Approver workbench: Approve, Reject, and Post to GL.
   - Expense Category configuration with policy limits.
 
-### 5. Verification Status
+### 5. Separate User Profiles & Admin User Management Engine
+
+- **Personal User Profiles (`/profile`)**:
+  - Independent profile viewing with account identity, verified email status, assigned company role, join date, and last login timestamp.
+  - Profile modification: Inline editing of user full name via `PATCH /api/v1/auth/profile`.
+  - Self-service security credentials: Change Password workbench (`POST /api/v1/auth/change-password`) with strict 12+ character enforcement, Argon2 verification of current credentials, and automatic revocation of secondary sessions.
+- **Admin Diagnostics & User Issue Resolution Center (`/people`)**:
+  - Company user governance table with search (name, email, role) and status filters (`ALL`, `ACTIVE`, `SUSPENDED`, `NEEDS ATTENTION`).
+  - Security health monitoring: Visual detection of account lockouts (`lockedUntil > now()`) and failed login attempt tracking (`failedLoginAttempts / 5`).
+  - **Issue Resolution & Recovery Modal**:
+    - **High-Entropy Password Generation**: 16-character secure random password generation with one-click copy, automated password hashing, lockout clearance, and session revocation.
+    - **Admin Password Reset**: Manual custom password assignment.
+    - **Self-Service Reset Links**: Generates authorized 24-hour opaque reset tokens with direct URL copying.
+    - **Instant Account Unlock**: Clears lockout flags and resets failed login counters to 0.
+    - **Role Reassignment & Access Suspension**: Reassign company roles or toggle active/suspended status with audit logging.
+  - **Team Member Provisioning**: Modal to add members with name, email, role assignment, and auto-generated temporary login credentials.
+
+### 6. Verification Status
+
 - `pnpm format:check`: Passed — all files formatted to Prettier standards.
 - `pnpm lint`: Passed — zero ESLint errors or warnings across 7 packages.
 - `pnpm typecheck`: Passed — strict TypeScript compiler validation passed across all packages.
-- `pnpm test`: Passed — 9 test suites, 85+ unit tests passed (60 in `@erp/api`, 21 in `@erp/database`, 3 in `@erp/web`, 1 in `@erp/worker`).
+- `pnpm test`: Passed — 10 test suites, 88+ unit tests passed (63 in `@erp/api`, 21 in `@erp/database`, 3 in `@erp/web`, 1 in `@erp/worker`).
 - `pnpm build`: Passed — Turborepo and Next.js production builds completed cleanly.
-

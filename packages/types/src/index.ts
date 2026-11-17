@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const emailSchema = z
   .email()
@@ -32,12 +32,43 @@ export const refreshSessionSchema = z.object({
 export const changeMembershipRoleSchema = z.object({ roleId: z.uuid() });
 export const changeMembershipStatusSchema = z.object({ status: z.enum(["ACTIVE", "SUSPENDED"]) });
 
+export const updateProfileSchema = z.object({
+  fullName: z.string().trim().min(2).max(160),
+});
+
+export const changeOwnPasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  newPassword: passwordSchema,
+});
+
+export const adminResetPasswordSchema = z.object({
+  newPassword: passwordSchema,
+});
+
+export const inviteCompanyUserSchema = z.object({
+  email: emailSchema,
+  fullName: z.string().trim().min(2).max(160),
+  roleId: z.uuid(),
+  temporaryPassword: passwordSchema.optional(),
+});
+
+export const adminUpdateUserSchema = z.object({
+  fullName: z.string().trim().min(2).max(160).optional(),
+  roleId: z.uuid().optional(),
+  status: z.enum(["ACTIVE", "SUSPENDED"]).optional(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangeMembershipRoleInput = z.infer<typeof changeMembershipRoleSchema>;
 export type ChangeMembershipStatusInput = z.infer<typeof changeMembershipStatusSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ChangeOwnPasswordInput = z.infer<typeof changeOwnPasswordSchema>;
+export type AdminResetPasswordInput = z.infer<typeof adminResetPasswordSchema>;
+export type InviteCompanyUserInput = z.infer<typeof inviteCompanyUserSchema>;
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
 
 export type ApiError = {
   code: string;

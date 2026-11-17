@@ -1,5 +1,10 @@
 import { and, eq, gt, isNull, sql } from "drizzle-orm";
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import {
   auditLogs,
@@ -14,11 +19,13 @@ import {
   userSessions,
 } from "@erp/database/schema";
 import type {
+  ChangeOwnPasswordInput,
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
   ResetPasswordInput,
   SessionResult,
+  UpdateProfileInput,
 } from "@erp/types";
 import { randomBytes, randomUUID } from "node:crypto";
 import { DatabaseService } from "../database/database.service.js";
@@ -372,7 +379,16 @@ export class AuthService {
     userId: string,
     companyId?: string,
   ): Promise<{
-    user: { id: string; email: string; fullName: string; platformRole: string } | null;
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+      platformRole: string;
+      status: string;
+      emailVerifiedAt: Date | null;
+      lastLoginAt: Date | null;
+      createdAt: Date;
+    } | null;
     company: { id: string; name: string; slug: string; baseCurrency: string } | null;
     role: { membershipId: string; roleId: string; roleName: string } | null;
   }> {
@@ -382,6 +398,10 @@ export class AuthService {
         email: users.email,
         fullName: users.fullName,
         platformRole: users.platformRole,
+        status: users.status,
+        emailVerifiedAt: users.emailVerifiedAt,
+        lastLoginAt: users.lastLoginAt,
+        createdAt: users.createdAt,
       })
       .from(users)
       .where(and(eq(users.id, userId), isNull(users.deletedAt)))
@@ -425,6 +445,83 @@ export class AuthService {
     }
 
     return { user, company, role };
+  }
+
+  async updateProfile(
+    userId: string,
+    input: UpdateProfileInput,
+    meta: RequestMetadata,
+  ): Promise<{ status: "updated"; fullName: string }> {
+    await this.database.platform
+      .update(users)
+      .set({ fullName: input.fullName, updatedAt: new Date() })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+
+    await this.audit.record({
+      actorUserId: userId,
+      action: "auth.profile.updated",
+      outcome: "SUCCESS",
+      targetType: "user",
+      targetId: userId,
+      ...meta,
+      metadata: { fullName: input.fullName },
+    });
+
+    return { status: "updated", fullName: input.fullName };
+  }
+
+  async changePassword(
+    userId: string,
+    input: ChangeOwnPasswordInput,
+    meta: RequestMetadata,
+  ): Promise<{ status: "changed" }> {
+    const [user] = await this.database.platform
+      .select({ id: users.id, passwordHash: users.passwordHash })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .limit(1);
+
+    if (!user?.passwordHash) {
+      throw new UnauthorizedException({
+        code: "INVALID_CREDENTIALS",
+        message: "Account credentials could not be verified",
+      });
+    }
+
+    const matches = await this.passwords.verify(user.passwordHash, input.currentPassword);
+    if (!matches) {
+      throw new BadRequestException({
+        code: "CURRENT_PASSWORD_INCORRECT",
+        message: "The current password provided is incorrect",
+      });
+    }
+
+    const newHash = await this.passwords.hash(input.newPassword);
+    await this.database.platform.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({ passwordHash: newHash, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+
+      await tx
+        .update(userSessions)
+        .set({ status: "REVOKED", revokedAt: new Date(), revokeReason: "password_changed_by_user" })
+        .where(and(eq(userSessions.userId, userId), eq(userSessions.status, "ACTIVE")));
+
+      await tx.insert(auditLogs).values({
+        actorUserId: userId,
+        action: "auth.password.changed",
+        outcome: "SUCCESS",
+        targetType: "user",
+        targetId: userId,
+        requestId: meta.requestId,
+        ipAddress: meta.ipAddress,
+        userAgent: meta.userAgent,
+        metadata: {},
+      });
+    });
+
+    return { status: "changed" };
   }
 
   async forgotPassword(input: ForgotPasswordInput, meta: RequestMetadata): Promise<void> {

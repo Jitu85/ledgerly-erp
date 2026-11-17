@@ -5,14 +5,21 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Req,
   UseGuards,
 } from "@nestjs/common";
 import {
+  adminResetPasswordSchema,
+  adminUpdateUserSchema,
   changeMembershipRoleSchema,
   changeMembershipStatusSchema,
+  inviteCompanyUserSchema,
+  type AdminResetPasswordInput,
+  type AdminUpdateUserInput,
   type ChangeMembershipRoleInput,
   type ChangeMembershipStatusInput,
+  type InviteCompanyUserInput,
 } from "@erp/types";
 import { AccessTokenGuard } from "../auth/access-token.guard.js";
 import { requestMetadata, type AuthenticatedRequest } from "../auth/auth.types.js";
@@ -40,6 +47,97 @@ export class CompanyUsersController {
   @RequirePermissions("company.users.view")
   list(@Req() request: AuthenticatedRequest) {
     return this.companyUsers.list(tenantCompanyId(request));
+  }
+
+  @Get("roles")
+  @RequirePermissions("company.users.view")
+  getRoles(@Req() request: AuthenticatedRequest) {
+    return this.companyUsers.getRoles(tenantCompanyId(request));
+  }
+
+  @Post("invite")
+  @RequirePermissions("company.users.manage")
+  async invite(
+    @Body(new ZodValidationPipe(inviteCompanyUserSchema)) input: InviteCompanyUserInput,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.companyUsers.inviteUser(
+      tenantCompanyId(request),
+      input,
+      request.auth.sub,
+      requestMetadata(request),
+    );
+  }
+
+  @Post(":membershipId/reset-password")
+  @RequirePermissions("company.users.manage")
+  async resetPassword(
+    @Param("membershipId") membershipId: string,
+    @Body(new ZodValidationPipe(adminResetPasswordSchema)) input: AdminResetPasswordInput,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.companyUsers.adminResetPassword(
+      tenantCompanyId(request),
+      membershipId,
+      input,
+      request.auth.sub,
+      requestMetadata(request),
+    );
+  }
+
+  @Post(":membershipId/generate-password")
+  @RequirePermissions("company.users.manage")
+  async generatePassword(
+    @Param("membershipId") membershipId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.companyUsers.generatePassword(
+      tenantCompanyId(request),
+      membershipId,
+      request.auth.sub,
+      requestMetadata(request),
+    );
+  }
+
+  @Post(":membershipId/unlock")
+  @RequirePermissions("company.users.manage")
+  async unlock(@Param("membershipId") membershipId: string, @Req() request: AuthenticatedRequest) {
+    return this.companyUsers.unlockUser(
+      tenantCompanyId(request),
+      membershipId,
+      request.auth.sub,
+      requestMetadata(request),
+    );
+  }
+
+  @Post(":membershipId/create-reset-link")
+  @RequirePermissions("company.users.manage")
+  async createResetLink(
+    @Param("membershipId") membershipId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.companyUsers.createResetLink(
+      tenantCompanyId(request),
+      membershipId,
+      request.auth.sub,
+      requestMetadata(request),
+    );
+  }
+
+  @Patch(":membershipId/details")
+  @RequirePermissions("company.users.manage")
+  async updateDetails(
+    @Param("membershipId") membershipId: string,
+    @Body(new ZodValidationPipe(adminUpdateUserSchema)) input: AdminUpdateUserInput,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.companyUsers.updateDetails(
+      tenantCompanyId(request),
+      membershipId,
+      input,
+      request.auth.sub,
+      requestMetadata(request),
+    );
   }
 
   @Patch(":membershipId/role")
