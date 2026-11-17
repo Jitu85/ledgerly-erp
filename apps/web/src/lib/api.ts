@@ -51,6 +51,15 @@ export async function postJson(path: string, body: unknown): Promise<Response> {
   });
 }
 
+export async function patchJson(path: string, body: unknown): Promise<Response> {
+  return fetch(`${apiUrl}${path}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: buildHeaders(undefined, "PATCH"),
+    body: JSON.stringify(body),
+  });
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const method = options.method ?? "GET";
   const headers = buildHeaders(options.headers, method);

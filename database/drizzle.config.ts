@@ -18,6 +18,8 @@ export default defineConfig({
     "./src/inventory-schema.ts",
     "./src/purchase-schema.ts",
     "./src/sales-schema.ts",
+    "./src/accounting-schema.ts",
+    "./src/expense-schema.ts",
   ],
   out: "./migrations",
   dialect: "postgresql",

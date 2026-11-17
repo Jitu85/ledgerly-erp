@@ -1,8 +1,19 @@
 import "dotenv/config";
+import dotenv from "dotenv";
+import path from "node:path";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import postgres from "postgres";
-import { permissions, platformSettings } from "./schema.js";
+import {
+  accountingPeriods,
+  accounts,
+  companies,
+  expenseCategories,
+  permissions,
+  platformSettings,
+  rolePermissions,
+  roles,
+} from "./index.js";
 
 const permissionSeed = [
   ["company.view", "View the active company"],
@@ -75,10 +86,77 @@ const permissionSeed = [
   ["sales.payments.record", "Record and allocate customer payments"],
   ["sales.outstanding.view", "View customer outstanding balances"],
   ["sales.export", "Export tenant-scoped sales data"],
+  ["accounting.view", "View chart of accounts, journals, and general ledger"],
+  ["accounting.accounts.manage", "Manage chart of accounts"],
+  ["accounting.periods.manage", "Open, close, and lock accounting periods"],
+  ["accounting.journals.create", "Create and submit journal entries"],
+  ["accounting.journals.post", "Post balanced journal entries"],
+  ["accounting.journals.reverse", "Reverse posted journal entries"],
+  ["accounting.reports.view", "View trial balance and financial statements"],
+  ["accounting.export", "Export tenant-scoped accounting data"],
+  ["expense.categories.manage", "Manage expense categories and policy limits"],
+  ["expense.claims.view", "View expense claims"],
+  ["expense.claims.create", "Create and submit expense claims"],
+  ["expense.claims.approve", "Approve or reject expense claims"],
+  ["expense.claims.post", "Post approved expense claims to accounting"],
+  ["expense.export", "Export tenant-scoped expense data"],
 ] as const;
 
-import dotenv from "dotenv";
-import path from "node:path";
+const standardAccounts = [
+  { code: "1000", name: "Cash on Hand", type: "ASSET", subtype: "CURRENT_ASSET" },
+  { code: "1010", name: "Operating Bank Account", type: "ASSET", subtype: "CURRENT_ASSET" },
+  {
+    code: "1100",
+    name: "Accounts Receivable",
+    type: "ASSET",
+    subtype: "CURRENT_ASSET",
+    isControlAccount: true,
+  },
+  {
+    code: "1200",
+    name: "Inventory Asset",
+    type: "ASSET",
+    subtype: "CURRENT_ASSET",
+    isControlAccount: true,
+  },
+  {
+    code: "2000",
+    name: "Accounts Payable",
+    type: "LIABILITY",
+    subtype: "CURRENT_LIABILITY",
+    isControlAccount: true,
+  },
+  {
+    code: "2100",
+    name: "Employee Expense Reimbursement Payable",
+    type: "LIABILITY",
+    subtype: "CURRENT_LIABILITY",
+    isControlAccount: true,
+  },
+  { code: "3000", name: "Retained Earnings", type: "EQUITY", subtype: "EQUITY" },
+  { code: "4000", name: "Sales Revenue", type: "REVENUE", subtype: "OPERATING_REVENUE" },
+  { code: "5000", name: "Cost of Goods Sold", type: "EXPENSE", subtype: "COST_OF_GOODS_SOLD" },
+  {
+    code: "6000",
+    name: "General & Administrative Expenses",
+    type: "EXPENSE",
+    subtype: "OPERATING_EXPENSE",
+  },
+  { code: "6100", name: "Travel & Lodging", type: "EXPENSE", subtype: "OPERATING_EXPENSE" },
+  { code: "6200", name: "Meals & Entertainment", type: "EXPENSE", subtype: "OPERATING_EXPENSE" },
+  {
+    code: "6300",
+    name: "Office Supplies & Equipment",
+    type: "EXPENSE",
+    subtype: "OPERATING_EXPENSE",
+  },
+  {
+    code: "6400",
+    name: "Software & IT Subscriptions",
+    type: "EXPENSE",
+    subtype: "OPERATING_EXPENSE",
+  },
+];
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 dotenv.config({ path: path.resolve(process.cwd(), "../.env.local") });
@@ -92,18 +170,141 @@ const client = postgres(url, { max: 1 });
 const db = drizzle(client);
 
 await db.transaction(async (tx) => {
+  // 1. Seed permissions
   for (const [code, description] of permissionSeed) {
     await tx.insert(permissions).values({ code, description }).onConflictDoUpdate({
       target: permissions.code,
       set: { description },
     });
   }
+
+  // 2. Seed platform settings
   await tx
     .insert(platformSettings)
     .values({ key: "security", value: { loginLockoutAttempts: 5, loginLockoutMinutes: 15 } })
     .onConflictDoNothing();
+
+  // 3. Grant all permissions to COMPANY_OWNER and COMPANY_ADMIN roles
+  const allPermissions = await tx.select().from(permissions);
+  const companyRoles = await tx.select().from(roles);
+
+  for (const role of companyRoles) {
+    if (role.code === "COMPANY_OWNER" || role.code === "COMPANY_ADMIN") {
+      for (const p of allPermissions) {
+        await tx
+          .insert(rolePermissions)
+          .values({
+            companyId: role.companyId,
+            roleId: role.id,
+            permissionId: p.id,
+          })
+          .onConflictDoNothing();
+      }
+    }
+  }
+
+  // 4. Seed standard chart of accounts, periods, and expense categories for all companies
+  const allCompanies = await tx.select().from(companies);
+  for (const comp of allCompanies) {
+    // Standard Accounts
+    const accountIdMap = new Map<string, string>();
+    for (const acc of standardAccounts) {
+      const [existing] = await tx
+        .select()
+        .from(accounts)
+        .where(and(eq(accounts.companyId, comp.id), eq(accounts.code, acc.code)))
+        .limit(1);
+
+      if (!existing) {
+        const [inserted] = await tx
+          .insert(accounts)
+          .values({
+            companyId: comp.id,
+            code: acc.code,
+            name: acc.name,
+            type: acc.type,
+            subtype: acc.subtype,
+            currency: comp.baseCurrency || "USD",
+            isControlAccount: acc.isControlAccount ?? false,
+            isActive: true,
+          })
+          .returning();
+        if (inserted) accountIdMap.set(acc.code, inserted.id);
+      } else {
+        accountIdMap.set(acc.code, existing.id);
+      }
+    }
+
+    // Standard Period
+    const currentYear = new Date().getFullYear().toString();
+    const [period] = await tx
+      .select()
+      .from(accountingPeriods)
+      .where(
+        and(
+          eq(accountingPeriods.companyId, comp.id),
+          eq(accountingPeriods.name, `${currentYear}-FY`),
+        ),
+      )
+      .limit(1);
+
+    if (!period) {
+      await tx.insert(accountingPeriods).values({
+        companyId: comp.id,
+        name: `${currentYear}-FY`,
+        startDate: `${currentYear}-01-01`,
+        endDate: `${currentYear}-12-31`,
+        status: "OPEN",
+      });
+    }
+
+    // Standard Expense Categories
+    const categoriesToSeed = [
+      {
+        code: "TRAVEL",
+        name: "Business Travel & Lodging",
+        accountCode: "6100",
+        policyLimit: "2000.0000",
+      },
+      { code: "MEALS", name: "Client & Team Meals", accountCode: "6200", policyLimit: "150.0000" },
+      {
+        code: "SUPPLIES",
+        name: "Office Supplies & Equipment",
+        accountCode: "6300",
+        policyLimit: "500.0000",
+      },
+      {
+        code: "SOFTWARE",
+        name: "Software & Cloud Services",
+        accountCode: "6400",
+        policyLimit: "1000.0000",
+      },
+    ];
+
+    for (const cat of categoriesToSeed) {
+      const [existing] = await tx
+        .select()
+        .from(expenseCategories)
+        .where(and(eq(expenseCategories.companyId, comp.id), eq(expenseCategories.code, cat.code)))
+        .limit(1);
+
+      if (!existing) {
+        await tx.insert(expenseCategories).values({
+          companyId: comp.id,
+          code: cat.code,
+          name: cat.name,
+          accountId: accountIdMap.get(cat.accountCode) ?? null,
+          policyLimit: cat.policyLimit,
+          isActive: true,
+        });
+      }
+    }
+  }
+
   await tx.execute(sql`select 1`);
 });
 
 await client.end();
-console.log(`Seeded ${permissionSeed.length.toString()} stable permissions and platform defaults.`);
+console.log(
+  `Seeded ${permissionSeed.length.toString()} permissions, standard Chart of Accounts, and Expense Categories.`,
+);

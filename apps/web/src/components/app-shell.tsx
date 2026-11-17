@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   PackageOpen,
+  Receipt,
   ReceiptText,
   Settings,
   ShoppingCart,
@@ -38,13 +39,14 @@ const readyNavigation = [
   { href: "/inventory", label: "Inventory", icon: Boxes },
   { href: "/purchases", label: "Purchases", icon: ShoppingCart },
   { href: "/sales", label: "Sales", icon: ReceiptText },
+  { href: "/accounting", label: "Accounting", icon: WalletCards },
+  { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/people", label: "People", icon: Users },
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/about", label: "System information", icon: Info },
   { href: "/dashboard#settings", label: "Company settings", icon: Settings },
 ];
 const laterNavigation = [
-  { label: "Accounting", icon: WalletCards },
   { label: "Payroll", icon: UserRound },
   { label: "Reports", icon: PackageOpen },
 ];

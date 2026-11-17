@@ -75,3 +75,65 @@ Repository audit, housekeeping, landing page design alignment, and build validat
 ### Next Step for Next Session
 
 - Proceed with target deployment (Docker Compose local stack or cloud host deployment as configured in `docker/compose.local.yml` and `.env`).
+
+---
+
+## Production Deployment & Full Accounting/Expenses Checkpoint - 17 November 2026
+
+Successfully deployed the live production environment, wired all frontend screens to live backend REST endpoints, and implemented the complete Core Accounting and Expenses modules with double-entry ledger balancing and strict multi-tenancy.
+
+### 1. Live Deployment Infrastructure
+- **Frontend Live Host**: Deployed to Vercel at `https://ledgerly-erp.vercel.app`.
+- **Backend API Live Host**: Deployed to Render Web Service at `https://ledgerly-erp.onrender.com`.
+- **Database**: Provisioned serverless PostgreSQL on Neon (`ep-wild-sky-a18u03qr` in `ap-southeast-1`) with pooling.
+- **Production Seed Account**: Verified `admin@ledgerly.com` / `LedgerlyAdmin2026!` for `Ledgerly Enterprises`.
+
+### 2. Frontend Live API Integration
+- Wired live REST APIs across all functional modules:
+  - **Dashboard**: Live metrics (`/api/v1/sales/outstanding`, inventory stock levels, purchases).
+  - **Inventory**: Live stock balances, items, warehouses, and valuation.
+  - **Purchases**: Suppliers, purchase orders, goods receipt posting, and purchase invoices.
+  - **Sales**: Customers, quotations, sales orders, deliveries, and sales invoices.
+  - **Team/People**: Company members, invitees, and role assignments.
+  - **Auth & Profile**: Session validation (`GET /api/v1/auth/me`), profile update, and active company context.
+
+### 3. Core Accounting & General Ledger Implementation
+- **PostgreSQL Schema (`database/src/accounting-schema.ts`)**:
+  - `accounts`: Standard Chart of Accounts (Asset, Liability, Equity, Revenue, Expense) with parent hierarchy.
+  - `accounting_periods`: Fiscal years and periods with soft-close and permanent locked status.
+  - `journal_entries`: Manual and auto-generated journal entries (`DRAFT`, `POSTED`, `REVERSED`).
+  - `journal_lines`: Double-entry debit/credit ledger lines with append-only integrity triggers.
+- **Service & Engine (`apps/api/src/accounting/`)**:
+  - Double-entry validation: strict rejection of journals where `sum(debit) != sum(credit)`.
+  - Immutable journal reversal: posting symmetrical offsetting journal entries.
+  - General Ledger reporting with dynamic running balances.
+  - Trial Balance engine ensuring balanced debit/credit sums.
+- **Frontend Screen (`apps/web/src/components/accounting/accounting-screen.tsx`)**:
+  - Chart of Accounts browser & account creation form.
+  - Interactive Journal Entry composer with real-time debit/credit balancing indicator.
+  - One-click Post to GL and Reverse Journal actions.
+  - Live General Ledger ledger viewer with account filtering.
+  - Trial Balance report with balanced verification badge.
+  - Fiscal Period management (Close Period, Lock Period).
+
+### 4. Expenses & Claims Implementation
+- **PostgreSQL Schema (`database/src/expense-schema.ts`)**:
+  - `expense_categories`: Categorization with optional policy limit and default GL account mapping.
+  - `expense_claims`: Multi-line expense claims (`DRAFT`, `SUBMITTED`, `APPROVED`, `REJECTED`, `POSTED`).
+  - `expense_lines`: Individual expense items with amount, receipt URL, and tax tracking.
+- **Service & Engine (`apps/api/src/expenses/`)**:
+  - Claim submission and approval/rejection workflows with tenant verification.
+  - Automated GL posting (`postClaimToGL`): automatically creates and posts balanced double-entry journal entries crediting Accounts Payable / Reimbursements Payable and debiting categorized Expense accounts.
+- **Frontend Screen (`apps/web/src/components/expenses/expense-screen.tsx`)**:
+  - Claims workbench with status filtering.
+  - Multi-line item expense claim submission modal with live subtotal and tax calculation.
+  - Approver workbench: Approve, Reject, and Post to GL.
+  - Expense Category configuration with policy limits.
+
+### 5. Verification Status
+- `pnpm format:check`: Passed — all files formatted to Prettier standards.
+- `pnpm lint`: Passed — zero ESLint errors or warnings across 7 packages.
+- `pnpm typecheck`: Passed — strict TypeScript compiler validation passed across all packages.
+- `pnpm test`: Passed — 9 test suites, 85+ unit tests passed (60 in `@erp/api`, 21 in `@erp/database`, 3 in `@erp/web`, 1 in `@erp/worker`).
+- `pnpm build`: Passed — Turborepo and Next.js production builds completed cleanly.
+

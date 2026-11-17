@@ -13,6 +13,8 @@ import { InventoryModule } from "./inventory/inventory.module.js";
 import { NeonModule } from "./neon/neon.module.js";
 import { PurchaseModule } from "./purchase/purchase.module.js";
 import { SalesModule } from "./sales/sales.module.js";
+import { AccountingModule } from "./accounting/accounting.module.js";
+import { ExpensesModule } from "./expenses/expenses.module.js";
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { SalesModule } from "./sales/sales.module.js";
     InventoryModule,
     PurchaseModule,
     SalesModule,
+    AccountingModule,
+    ExpensesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },
