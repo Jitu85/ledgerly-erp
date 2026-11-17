@@ -1,14 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-export interface NeonFunctionsStatus {
+export type NeonFunctionsStatus = {
   isConfigured: boolean;
   helloBaseUrl?: string | undefined;
   helloResponding: boolean;
   responsePreview?: string | undefined;
   statusCode?: number | undefined;
   error?: string | undefined;
-}
+};
 
 @Injectable()
 export class NeonFunctionsService {
@@ -21,7 +21,9 @@ export class NeonFunctionsService {
     this.isConfigured = Boolean(this.helloBaseUrl);
 
     if (this.isConfigured) {
-      this.logger.log(`Neon Functions service configured for hello endpoint: ${this.helloBaseUrl}`);
+      this.logger.log(
+        `Neon Functions service configured for hello endpoint: ${this.helloBaseUrl ?? ""}`,
+      );
     } else {
       this.logger.warn("NEON_FUNCTION_HELLO_BASE_URL not configured");
     }

@@ -1,11 +1,47 @@
-﻿"use client";
+"use client";
+
 import { useState } from "react";
-import { AlertTriangle } from "lucide-react";
-export function SalesActionButton({ label, effect }: { label: string; effect: string }) {
+import { AlertTriangle, Loader2 } from "lucide-react";
+
+export function SalesActionButton({
+  label,
+  effect,
+  onConfirm,
+  loading = false,
+  disabled = false,
+}: {
+  label: string;
+  effect: string;
+  onConfirm?: () => Promise<void> | void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleConfirm() {
+    if (onConfirm) {
+      setSubmitting(true);
+      try {
+        await onConfirm();
+        setOpen(false);
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      setOpen(false);
+    }
+  }
+
   return (
     <>
-      <button className="button button-primary" type="button" onClick={() => setOpen(true)}>
+      <button
+        className="button button-primary"
+        type="button"
+        disabled={disabled || loading}
+        onClick={() => setOpen(true)}
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : null}
         {label}
       </button>
       {open ? (
@@ -26,6 +62,7 @@ export function SalesActionButton({ label, effect }: { label: string; effect: st
               <button
                 className="button button-secondary"
                 type="button"
+                disabled={submitting}
                 onClick={() => setOpen(false)}
               >
                 Go back
@@ -33,9 +70,10 @@ export function SalesActionButton({ label, effect }: { label: string; effect: st
               <button
                 className="button button-primary"
                 type="button"
-                onClick={() => setOpen(false)}
+                disabled={submitting}
+                onClick={handleConfirm}
               >
-                Confirm action
+                {submitting ? "Processing..." : "Confirm action"}
               </button>
             </div>
           </section>

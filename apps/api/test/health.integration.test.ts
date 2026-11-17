@@ -25,7 +25,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (app) await app.close();
+  await app?.close();
 });
 
 describe("health endpoint", () => {

@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Throttle } from "@nestjs/throttler";
 import type { FastifyReply, FastifyRequest } from "fastify";
@@ -14,8 +24,9 @@ import {
   type SessionResult,
 } from "@erp/types";
 import { ZodValidationPipe } from "../common/zod-validation.pipe.js";
+import { AccessTokenGuard } from "./access-token.guard.js";
 import { AuthService } from "./auth.service.js";
-import { requestMetadata } from "./auth.types.js";
+import { requestMetadata, type AuthenticatedRequest } from "./auth.types.js";
 
 @Controller("auth")
 export class AuthController {
@@ -23,6 +34,12 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly config: ConfigService,
   ) {}
+
+  @Get("me")
+  @UseGuards(AccessTokenGuard)
+  async me(@Req() request: AuthenticatedRequest) {
+    return this.auth.getMe(request.auth.sub, request.auth.companyId);
+  }
 
   @Post("register")
   @Throttle({ default: { limit: 3, ttl: 60_000 } })

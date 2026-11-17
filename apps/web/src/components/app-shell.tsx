@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Bell,
@@ -8,6 +8,7 @@ import {
   Home,
   Info,
   LockKeyhole,
+  LogOut,
   Menu,
   PackageOpen,
   ReceiptText,
@@ -19,11 +20,18 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Brand } from "./brand";
 import { ThemeToggle } from "./theme-toggle";
 import { PlatformAttribution } from "./platform-attribution";
+import { getJson, postJson } from "@/lib/api";
+
+type MeResponse = {
+  user: { id: string; email: string; fullName: string; platformRole: string } | null;
+  company: { id: string; name: string; slug: string; baseCurrency: string } | null;
+  role: { membershipId: string; roleId: string; roleName: string } | null;
+};
 
 const readyNavigation = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -36,7 +44,6 @@ const readyNavigation = [
   { href: "/dashboard#settings", label: "Company settings", icon: Settings },
 ];
 const laterNavigation = [
-  { label: "Sales", icon: ReceiptText },
   { label: "Accounting", icon: WalletCards },
   { label: "Payroll", icon: UserRound },
   { label: "Reports", icon: PackageOpen },
@@ -44,7 +51,42 @@ const laterNavigation = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [session, setSession] = useState<MeResponse | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getJson<MeResponse>("/auth/me")
+      .then((data) => {
+        if (active) setSession(data);
+      })
+      .catch(() => {
+        // Unauthenticated or network error
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleLogout() {
+    try {
+      await postJson("/auth/logout", {});
+    } finally {
+      router.push("/login");
+    }
+  }
+
+  const companyName = session?.company?.name ?? "Ledgerly Enterprises";
+  const userName = session?.user?.fullName ?? session?.user?.email ?? "Admin";
+  const initials =
+    userName
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "AD";
   return (
     <div className="app-shell">
       <button
@@ -114,9 +156,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
       <div className="workspace">
         <header className="topbar">
-          <button className="company-switcher" type="button">
+          <button className="company-switcher" type="button" title={`Company: ${companyName}`}>
             <Building2 size={18} />
-            <span>Northstar Trading</span>
+            <span>{companyName}</span>
             <ChevronDown size={16} />
           </button>
           <div className="topbar-actions">
@@ -124,11 +166,69 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <button className="icon-button" type="button" aria-label="Notifications">
               <Bell size={19} />
             </button>
-            <Link className="profile-control" href="/profile">
-              <span className="avatar">AP</span>
-              <span>Amina Patel</span>
-              <ChevronDown size={15} />
-            </Link>
+            <div style={{ position: "relative" }}>
+              <button
+                className="profile-control"
+                type="button"
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                aria-expanded={profileMenuOpen}
+              >
+                <span className="avatar">{initials}</span>
+                <span>{userName}</span>
+                <ChevronDown size={15} />
+              </button>
+              {profileMenuOpen ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "calc(100% + 8px)",
+                    background: "var(--card-bg, #1a202c)",
+                    border: "1px solid var(--border-color, #2d3748)",
+                    borderRadius: "8px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                    zIndex: 50,
+                    minWidth: "160px",
+                    padding: "6px",
+                  }}
+                >
+                  <Link
+                    href="/profile"
+                    className="nav-link"
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      display: "flex",
+                      gap: "8px",
+                    }}
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    <UserRound size={16} />
+                    <span>Profile</span>
+                  </Link>
+                  <button
+                    type="button"
+                    className="nav-link"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      display: "flex",
+                      gap: "8px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#ef4444",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={16} />
+                    <span>Sign out</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
         <main className="main-content">{children}</main>

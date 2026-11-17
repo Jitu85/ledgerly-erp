@@ -368,6 +368,65 @@ export class AuthService {
     });
   }
 
+  async getMe(
+    userId: string,
+    companyId?: string,
+  ): Promise<{
+    user: { id: string; email: string; fullName: string; platformRole: string } | null;
+    company: { id: string; name: string; slug: string; baseCurrency: string } | null;
+    role: { membershipId: string; roleId: string; roleName: string } | null;
+  }> {
+    const [user] = await this.database.platform
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        platformRole: users.platformRole,
+      })
+      .from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+      .limit(1);
+
+    if (!user) return { user: null, company: null, role: null };
+
+    let company = null;
+    let role = null;
+    if (companyId) {
+      const [c] = await this.database.platform
+        .select({
+          id: companies.id,
+          name: companies.name,
+          slug: companies.slug,
+          baseCurrency: companies.baseCurrency,
+        })
+        .from(companies)
+        .where(and(eq(companies.id, companyId), isNull(companies.deletedAt)))
+        .limit(1);
+      company = c ?? null;
+
+      const [membership] = await this.database.platform
+        .select({
+          membershipId: companyUsers.id,
+          roleId: roles.id,
+          roleName: roles.name,
+        })
+        .from(companyUsers)
+        .innerJoin(roles, eq(roles.id, companyUsers.roleId))
+        .where(
+          and(
+            eq(companyUsers.userId, userId),
+            eq(companyUsers.companyId, companyId),
+            eq(companyUsers.status, "ACTIVE"),
+            isNull(companyUsers.deletedAt),
+          ),
+        )
+        .limit(1);
+      role = membership ?? null;
+    }
+
+    return { user, company, role };
+  }
+
   async forgotPassword(input: ForgotPasswordInput, meta: RequestMetadata): Promise<void> {
     const [user] = await this.database.platform
       .select({ id: users.id })

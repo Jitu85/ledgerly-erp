@@ -18,10 +18,10 @@ export class NeonStorageService {
 
   constructor(private readonly config: ConfigService) {
     const endpoint = this.config.get<string>("AWS_ENDPOINT_URL_S3");
-    const region = this.config.get<string>("AWS_REGION") || "ap-southeast-1";
+    const region = this.config.get<string>("AWS_REGION") ?? "ap-southeast-1";
     const accessKeyId = this.config.get<string>("AWS_ACCESS_KEY_ID");
     const secretAccessKey = this.config.get<string>("AWS_SECRET_ACCESS_KEY");
-    this.bucketName = this.config.get<string>("NEON_OBJECT_STORAGE_BUCKET") || "assets";
+    this.bucketName = this.config.get<string>("NEON_OBJECT_STORAGE_BUCKET") ?? "assets";
 
     if (endpoint && accessKeyId && secretAccessKey) {
       this.s3Client = new S3Client({

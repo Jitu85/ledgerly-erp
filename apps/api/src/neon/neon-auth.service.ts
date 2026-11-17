@@ -1,14 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-export interface NeonAuthStatus {
+export type NeonAuthStatus = {
   isConfigured: boolean;
   baseUrl?: string | undefined;
   jwksUrl?: string | undefined;
   jwksReachable: boolean;
   keysCount?: number | undefined;
   error?: string | undefined;
-}
+};
 
 @Injectable()
 export class NeonAuthService {
@@ -23,7 +23,7 @@ export class NeonAuthService {
     this.isConfigured = Boolean(this.baseUrl && this.jwksUrl);
 
     if (this.isConfigured) {
-      this.logger.log(`Neon Auth service configured with base: ${this.baseUrl}`);
+      this.logger.log(`Neon Auth service configured with base: ${this.baseUrl ?? ""}`);
     } else {
       this.logger.warn("Neon Auth variables not set; managed auth integration disabled");
     }
@@ -50,7 +50,7 @@ export class NeonAuthService {
           baseUrl: this.baseUrl,
           jwksUrl: this.jwksUrl,
           jwksReachable: false,
-          error: `JWKS endpoint responded with status ${response.status}`,
+          error: `JWKS endpoint responded with status ${response.status.toString()}`,
         };
       }
 

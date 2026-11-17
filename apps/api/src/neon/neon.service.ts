@@ -6,7 +6,7 @@ import { NeonRealtimeService, type NeonRealtimeStatus } from "./neon-realtime.se
 import { NeonFunctionsService, type NeonFunctionsStatus } from "./neon-functions.service.js";
 import { sql } from "drizzle-orm";
 
-export interface NeonServicesReport {
+export type NeonServicesReport = {
   timestamp: string;
   postgres: {
     connected: boolean;
@@ -28,7 +28,7 @@ export interface NeonServicesReport {
     allOperational: boolean;
     note: string;
   };
-}
+};
 
 @Injectable()
 export class NeonService {
@@ -67,7 +67,7 @@ export class NeonService {
     }
 
     // 2. Object Storage Verification (End-to-End Put, Get, Delete)
-    let storageStatus: NeonServicesReport["objectStorage"] = {
+    const storageStatus: NeonServicesReport["objectStorage"] = {
       configured: this.storageService.isConfigured,
       bucket: this.storageService.bucketName,
       bucketAccessible: false,
@@ -79,7 +79,7 @@ export class NeonService {
         const bucketCheck = await this.storageService.checkBucket();
         storageStatus.bucketAccessible = bucketCheck.status === "connected";
 
-        const testKey = `test/neon-health-${Date.now()}.txt`;
+        const testKey = `test/neon-health-${Date.now().toString()}.txt`;
         const testContent = `Neon Object Storage Health Check - ${timestamp}`;
 
         await this.storageService.putObject(testKey, testContent, "text/plain");

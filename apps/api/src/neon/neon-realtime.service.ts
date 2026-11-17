@@ -1,13 +1,13 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-export interface NeonRealtimeStatus {
+export type NeonRealtimeStatus = {
   isConfigured: boolean;
   realtimeUrl?: string | undefined;
   hasSecret: boolean;
   reachable: boolean;
   error?: string | undefined;
-}
+};
 
 @Injectable()
 export class NeonRealtimeService {
@@ -22,7 +22,7 @@ export class NeonRealtimeService {
     this.isConfigured = Boolean(this.realtimeUrl && this.secret);
 
     if (this.isConfigured) {
-      this.logger.log(`Neon Realtime configured for WebSocket: ${this.realtimeUrl}`);
+      this.logger.log(`Neon Realtime configured for WebSocket: ${this.realtimeUrl ?? ""}`);
     } else {
       this.logger.warn("Neon Realtime variables not set");
     }
