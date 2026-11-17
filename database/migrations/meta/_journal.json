@@ -36,6 +36,13 @@
       "when": 1794888479638,
       "tag": "0004_accounting_and_expenses",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794892479638,
+      "tag": "0005_support_messages",
+      "breakpoints": true
     }
   ]
 }

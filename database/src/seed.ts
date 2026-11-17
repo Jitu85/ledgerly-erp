@@ -100,6 +100,8 @@ const permissionSeed = [
   ["expense.claims.approve", "Approve or reject expense claims"],
   ["expense.claims.post", "Post approved expense claims to accounting"],
   ["expense.export", "Export tenant-scoped expense data"],
+  ["support.view", "View company support messages and help requests"],
+  ["support.manage", "Reply to and resolve support messages"],
 ] as const;
 
 const standardAccounts = [

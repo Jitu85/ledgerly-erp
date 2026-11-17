@@ -20,6 +20,7 @@ export default defineConfig({
     "./src/sales-schema.ts",
     "./src/accounting-schema.ts",
     "./src/expense-schema.ts",
+    "./src/support-schema.ts",
   ],
   out: "./migrations",
   dialect: "postgresql",

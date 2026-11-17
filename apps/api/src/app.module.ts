@@ -15,6 +15,7 @@ import { PurchaseModule } from "./purchase/purchase.module.js";
 import { SalesModule } from "./sales/sales.module.js";
 import { AccountingModule } from "./accounting/accounting.module.js";
 import { ExpensesModule } from "./expenses/expenses.module.js";
+import { SupportModule } from "./support/support.module.js";
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ExpensesModule } from "./expenses/expenses.module.js";
     SalesModule,
     AccountingModule,
     ExpensesModule,
+    SupportModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: CsrfGuard },

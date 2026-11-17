@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 export const emailSchema = z
   .email()
@@ -89,3 +89,4 @@ export * from "./purchase.js";
 export * from "./sales.js";
 export * from "./accounting.js";
 export * from "./expenses.js";
+export * from "./support.js";

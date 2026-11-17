@@ -7,9 +7,11 @@ import {
   ChevronDown,
   Home,
   Info,
+  LifeBuoy,
   LockKeyhole,
   LogOut,
   Menu,
+  MessageSquare,
   PackageOpen,
   Receipt,
   ReceiptText,
@@ -42,6 +44,7 @@ const readyNavigation = [
   { href: "/accounting", label: "Accounting", icon: WalletCards },
   { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/people", label: "People", icon: Users },
+  { href: "/support", label: "Support Inbox", icon: MessageSquare },
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/about", label: "System information", icon: Info },
   { href: "/dashboard#settings", label: "Company settings", icon: Settings },
@@ -119,7 +122,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 pathname === item.href ||
                 (item.href === "/inventory" && pathname.startsWith("/inventory")) ||
                 (item.href === "/purchases" && pathname.startsWith("/purchases")) ||
-                (item.href === "/sales" && pathname.startsWith("/sales"));
+                (item.href === "/sales" && pathname.startsWith("/sales")) ||
+                (item.href === "/accounting" && pathname.startsWith("/accounting")) ||
+                (item.href === "/expenses" && pathname.startsWith("/expenses")) ||
+                (item.href === "/support" && pathname.startsWith("/support"));
               return (
                 <Link
                   key={item.label}
@@ -164,6 +170,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ChevronDown size={16} />
           </button>
           <div className="topbar-actions">
+            <Link
+              href="/support"
+              className="button button-secondary"
+              style={{
+                padding: "4px 10px",
+                fontSize: "0.8rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              title="Help & Support Inbox"
+            >
+              <LifeBuoy size={15} />
+              <span>Support</span>
+            </Link>
             <ThemeToggle />
             <button className="icon-button" type="button" aria-label="Notifications">
               <Bell size={19} />

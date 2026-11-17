@@ -151,10 +151,31 @@ Successfully deployed the live production environment, wired all frontend screen
     - **Role Reassignment & Access Suspension**: Reassign company roles or toggle active/suspended status with audit logging.
   - **Team Member Provisioning**: Modal to add members with name, email, role assignment, and auto-generated temporary login credentials.
 
-### 6. Verification Status
+### 6. In-Website User Messaging & Admin Support Inbox
+
+- **Database & Persistence (`database/src/support-schema.ts`)**:
+  - `support_messages`: Tenant-isolated messages with sender reference, subject, message body, category (`ACCOUNT`, `BUG`, `ACCESS`, `BILLING`, `GENERAL`), priority (`LOW`, `NORMAL`, `HIGH`, `URGENT`), status (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`), and admin response tracking.
+  - Migration `0005_support_messages.sql`: Applied to Neon PostgreSQL with forced RLS and tenant isolation.
+  - Granular permissions: `support.view` and `support.manage` granted to company administrators.
+- **REST API (`apps/api/src/support/`)**:
+  - `POST /api/v1/support/messages`: Authenticated users send problem reports and inquiries with Zod validation.
+  - `GET /api/v1/support/my-messages`: Fetches inquiries submitted by the active user.
+  - `GET /api/v1/support/admin/messages`: Admin inbox endpoint supporting status and category filtering.
+  - `POST /api/v1/support/messages/:id/reply`: Admin responds to ticket and updates status with immutable audit logging.
+  - `PATCH /api/v1/support/messages/:id/status`: Admin changes inquiry status (`OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`).
+- **Frontend User & Admin Workbench (`apps/web/src/components/support/support-screen.tsx`, `/support`)**:
+  - **Direct Topbar Support Access**: Quick "Support" button in the application topbar for one-click access.
+  - **Inquiry Submission Modal**: Form for users to report problems, select category, urgency level, and submit detailed context.
+  - **Admin Inbox Hub**:
+    - Summary metrics: Total Tickets, Open Issues, In Progress, Resolved.
+    - Two-column split-pane: Searchable & filterable ticket queue on the left, full conversation and reply composer on the right.
+    - Diagnostic shortcut: Detects account/password/lockout issues in the ticket text and provides a direct shortcut to resolve the user's issue in the People directory.
+    - Quick reply composer with status update actions.
+
+### 7. Verification Status
 
 - `pnpm format:check`: Passed — all files formatted to Prettier standards.
 - `pnpm lint`: Passed — zero ESLint errors or warnings across 7 packages.
 - `pnpm typecheck`: Passed — strict TypeScript compiler validation passed across all packages.
-- `pnpm test`: Passed — 10 test suites, 88+ unit tests passed (63 in `@erp/api`, 21 in `@erp/database`, 3 in `@erp/web`, 1 in `@erp/worker`).
+- `pnpm test`: Passed — 11 test suites, 91+ unit tests passed (66 in `@erp/api`, 22 in `@erp/database`, 3 in `@erp/web`, 1 in `@erp/worker`).
 - `pnpm build`: Passed — Turborepo and Next.js production builds completed cleanly.
